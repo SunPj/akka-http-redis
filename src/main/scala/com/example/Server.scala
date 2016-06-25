@@ -2,7 +2,7 @@ package com.example
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
@@ -28,15 +28,15 @@ object Server {
           val maybeItem: Future[Option[ByteString]] = redis.get(key.toString)
 
           onSuccess(maybeItem) {
-            case Some(item) => complete(item)
+            case Some(item) => complete(HttpEntity(ContentTypes.`application/json`, s"""{"key": $key, "value": "$item"}"""))
             case None       => complete(StatusCodes.NoContent)
           }
         }
       }
 
-    val bindingFuture = Http().bindAndHandle(route, "localhost", 8080)
+    val bindingFuture = Http().bindAndHandle(route, "0.0.0.0", 8888)
 
-    println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
+    println(s"Server online at http://localhost:8888/\nPress RETURN to stop...")
     StdIn.readLine() // let it run until user presses return
     bindingFuture
       .flatMap(_.unbind()) // trigger unbinding from the port
