@@ -6,10 +6,10 @@ import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
-import akka.util.ByteString
-import redis.RedisClient
+import eu.unicredit.reactive_aerospike.client.AerospikeClient
+import eu.unicredit.reactive_aerospike.data.AerospikeKey
+import eu.unicredit.reactive_aerospike.data.AerospikeValue.AerospikeStringConverter
 
-import scala.concurrent.Future
 import scala.io.StdIn
 
 object Server {
@@ -19,17 +19,17 @@ object Server {
     // needed for the future flatMap/onComplete in the end
     implicit val executionContext = system.dispatcher
 
-    val redis = RedisClient()
+    implicit val client = AerospikeClient("127.0.0.1", 3000)
 
     val route: Route =
       get {
         pathPrefix("get" / LongNumber) { key =>
-          // there might be no item for a given id
-          val maybeItem: Future[Option[ByteString]] = redis.get(key.toString)
+          val res = TrackDAO.read(AerospikeKey(TrackDAO.namespace, TrackDAO.setName, key.toString))
+          val opRes = res map (Some(_)) recover { case e => None }
 
-          onSuccess(maybeItem) {
-            case Some(item) => complete(HttpEntity(ContentTypes.`application/json`, s"""{"key": $key, "value": "$item"}"""))
-            case None       => complete(StatusCodes.NoContent)
+          onSuccess(opRes) {
+            case Some(track) => complete(HttpEntity(ContentTypes.`application/json`, s"""{"key": $key, "value": "${track.trackName}"}"""))
+            case None => complete(StatusCodes.NoContent)
           }
         }
       }
