@@ -28,7 +28,7 @@ object Server {
           val maybeItem: Future[Option[ByteString]] = redis.get(key.toString)
 
           onSuccess(maybeItem) {
-            case Some(item) => complete(HttpEntity(ContentTypes.`application/json`, s"""{"key": $key, "value": "$item"}"""))
+            case Some(item) => complete(HttpEntity(ContentTypes.`application/json`, s"""{"key": $key, "value": "${item.utf8String}"}"""))
             case None       => complete(StatusCodes.NoContent)
           }
         }
