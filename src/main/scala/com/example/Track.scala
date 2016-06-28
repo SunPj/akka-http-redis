@@ -13,7 +13,7 @@ object TrackDAO extends Dao[String, Track] {
 
   val objRead: (AerospikeKey[String], AerospikeRecord) => Track =
     (key: AerospikeKey[String], record: AerospikeRecord) =>
-      Track(new String(key.digest), record.get("trackdata"))
+      Track(new String(key.digest), record.get("trackName"))
 
   val objWrite: Seq[AerospikeBinProto[Track, _]] = Seq(
     ("trackId", (t: Track) => t.trackId),
