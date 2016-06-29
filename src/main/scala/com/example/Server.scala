@@ -35,9 +35,9 @@ object Server {
 
     val route: Route =
       get {
-        pathPrefix("get" / LongNumber) { key =>
+        pathPrefix("get" / Remaining) { key =>
           // there might be no item for a given id
-          val maybeItem: Future[Option[ByteString]] = redis.get(key.toString)
+          val maybeItem: Future[Option[ByteString]] = redis.get(key)
 
           onSuccess(maybeItem) {
             case Some(item) => complete(HttpEntity(ContentTypes.`application/json`, s"""{"key": $key, "value": "${item.utf8String}"}"""))
